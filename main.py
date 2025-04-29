@@ -192,7 +192,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             logger.info(f"⚠️ Клиент '{client_name}' не найден в Notion")
     else:
-        logger.info("Сообщение не похоже на саммари — пропускаем.")
+        logger.info("🔜 Сообщение не похоже на саммари — пропускаем.")
 
 
 # async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
