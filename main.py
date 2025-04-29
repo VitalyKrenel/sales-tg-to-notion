@@ -2,16 +2,34 @@ from telegram import Update, Chat
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 import requests
 import logging
+import sys
 import re
 import os
 from datetime import datetime
 
 # Настройка логгера
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO)
+# logging.basicConfig(
+#     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+#     level=logging.INFO)
 
-logger = logging.getLogger(__name__)
+# Настраиваем корневой логгер
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+# 1) INFO и ниже → stdout
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setLevel(logging.INFO)
+stdout_handler.setFormatter(
+    logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+# 2) WARNING и выше → stderr
+stderr_handler = logging.StreamHandler(sys.stderr)
+stderr_handler.setLevel(logging.WARNING)
+stderr_handler.setFormatter(
+    logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+# Подключаем только эти два
+logger.handlers = [stdout_handler, stderr_handler]
 
 TELEGRAM_TOKEN = os.environ["TG_BOT_TOKEN"]
 NOTION_TOKEN = os.environ["NOTION_INTEGRATION_SECRET"]
