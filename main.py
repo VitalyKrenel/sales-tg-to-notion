@@ -66,7 +66,10 @@ def find_notion_page(client_name: str) -> str | None:
     return None
 
 
-def update_notion_page(page_id: str, summary: str):
+def update_notion_page(page_id: str,
+                       summary: str,
+                       invite_link: str | None = None,
+                       message_link: str | None = None):
     # 1. Сначала GET, чтобы достать текущее Rich Text из поля Lead status
     url_page = f"https://api.notion.com/v1/pages/{page_id}"
     page = requests.get(url_page, headers=headers).json()
@@ -106,6 +109,34 @@ def update_notion_page(page_id: str, summary: str):
     new_rich = [date_mention, text_mention] + rich
     # 4. PATCH — обновляем только поле Lead status
     data_page = {"properties": {"Lead status": {"rich_text": new_rich}}}
+
+    # 4) Если есть invite_link — заполняем URL-поле в базе
+    if invite_link:
+        data_page["properties"]["Ссылка на чат"] = {
+            "rich_text": [{
+                "type": "text",
+                "text": {
+                    "content": invite_link,
+                    "link": {
+                        "url": invite_link
+                    }
+                }
+            }]
+        }
+
+    if message_link:
+        data_page["properties"]["Ссылка на последний саммари"] = {
+            "rich_text": [{
+                "type": "text",
+                "text": {
+                    "content": message_link,
+                    "link": {
+                        "url": message_link
+                    }
+                }
+            }]
+        }
+
     requests.patch(url_page, headers=headers, json=data_page)
 
     # 5. POST — создаём комментарий к странице с полным саммари
@@ -206,8 +237,25 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     summary = parse_call_message(text)
     if client_name and summary:
         page_id = find_notion_page(client_name)
+
         if page_id:
-            update_notion_page(page_id, summary)
+            # 1) получаем invite_link для чата
+            try:
+                invite_link = await context.bot.export_chat_invite_link(
+                    chat_id=message.chat.id)
+            except Exception as e:
+                logger.info("⚠️ Не удалось получить invite_link: %s", e)
+                invite_link = None
+
+            # 2) формируем ссылку прямо на это сообщение
+            if message.chat.username:
+                message_link = f"https://t.me/{message.chat.username}/{message.message_id}"
+            else:
+                # для приватных групп: id без префикса -100
+                cid = str(message.chat.id).removeprefix("-100")
+                message_link = f"https://t.me/c/{cid}/{message.message_id}"
+
+            update_notion_page(page_id, summary, invite_link, message_link)
             # await message.reply_text(f"✅ Обновлено в Notion для {client_name}")
             logger.info(f"✅ Обновлено в Notion для {client_name}")
         else:
