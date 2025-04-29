@@ -32,15 +32,18 @@ def find_notion_page(client_name: str) -> str | None:
     res = requests.post(url, headers=headers, json={})
     pages = res.json().get("results", [])
 
+    titles = []
     for page in pages:
         # 2) собираем всё текстовое содержимое свойства "Имя клиента"
         rich = page["properties"]["Name"]["title"]
         notion_name = "".join(rt.get("plain_text", "") for rt in rich)
         norm_page = _normalize(notion_name)
-
+        titles.append(notion_name)
         # 3) сравниваем: client_in_page или page_in_client
         if norm_client in norm_page or norm_page in norm_client:
             return page["id"]
+
+    logger.debug("🗂️ Notion titles scanned (%d): %s", len(titles), titles)
 
     return None
 
