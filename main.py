@@ -165,7 +165,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = message.text
     logger.info("▶️ Incoming message (first 2 paragraphs):\n%s",
-        "\n\n".join(text.split("\n\n")[:2]))
+                "\n\n".join(text.split("\n\n")[:2]))
     if not text:
         return
 
@@ -180,17 +180,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     logger.info("🎯 Extracted client_name from chat '%s': %s",
-        message.chat.title, client_name)
-    
+                message.chat.title, client_name)
+
     summary = parse_call_message(text)
     if client_name and summary:
         page_id = find_notion_page(client_name)
         if page_id:
             update_notion_page(page_id, summary)
-            await message.reply_text(f"✅ Обновлено в Notion для {client_name}")
+            # await message.reply_text(f"✅ Обновлено в Notion для {client_name}")
+            logger.info(f"✅ Обновлено в Notion для {client_name}")
         else:
-            await message.reply_text(
-                f"⚠️ Клиент '{client_name}' не найден в Notion")
+            logger.info(f"⚠️ Клиент '{client_name}' не найден в Notion")
     else:
         logger.info("Сообщение не похоже на саммари — пропускаем.")
 
